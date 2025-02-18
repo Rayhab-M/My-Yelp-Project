@@ -5,7 +5,6 @@ const Dashboard = ({ handleSignOut }) => {
   const [restaurants, setRestaurants] = useState([]);
   const [selectedRestaurant, setSelectedRestaurant] = useState(null);
 
-  // Predefined restaurants
   const predefinedRestaurants = [
     { name: "Mama's Kitchen", description: "Home-made cooked meals with love." },
     { name: "Italian Bistro", description: "Authentic Italian pasta and pizza, located in Italy." },
