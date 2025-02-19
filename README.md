@@ -54,6 +54,8 @@ A list of restaurants is available in the sidebar.
 Signing Out:
 Click the "Sign Out" button to log out.
 
+Here is the deployed link https://yelp03.netlify.app/
+
 ./my_project argument1 argument2
 ```
 
