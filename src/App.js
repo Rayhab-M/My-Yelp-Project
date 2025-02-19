@@ -1,8 +1,10 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Amplify } from "aws-amplify";
 import { signUp, signIn, signOut, getCurrentUser, confirmSignUp } from "aws-amplify/auth";
 import awsExports from "./aws-exports";
+import "bootstrap/dist/css/bootstrap.min.css";
+import Dashboard from "./Dashboard"; // Import the new Dashboard component
 
 Amplify.configure(awsExports);
 
@@ -10,10 +12,11 @@ const App = () => {
   const [user, setUser] = useState(null);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmCode, setConfirmCode] = useState(""); // For email verification
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [confirmCode, setConfirmCode] = useState("");
   const [error, setError] = useState("");
-  const [isSignUp, setIsSignUp] = useState(false); // Toggle between sign up and sign in
-  const [isConfirming, setIsConfirming] = useState(false); // Track if waiting for code
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     getCurrentUser()
@@ -21,23 +24,23 @@ const App = () => {
       .catch(() => setUser(null));
   }, []);
 
-  // Handles User Sign Up
   const handleSignUp = async () => {
+    if (password !== confirmPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
     try {
       await signUp({
-        username: email.trim(), // Email as username
+        username: email.trim(),
         password,
-        options: {
-          userAttributes: { email },
-        },
+        options: { userAttributes: { email } },
       });
-      setIsConfirming(true); // Show confirmation field
+      setIsConfirming(true);
     } catch (err) {
       setError(err.message);
     }
   };
 
-  // Handles Email Confirmation (Verification Code)
   const handleConfirmSignUp = async () => {
     try {
       await confirmSignUp({ username: email.trim(), confirmationCode: confirmCode });
@@ -48,7 +51,6 @@ const App = () => {
     }
   };
 
-  // Handles User Sign In
   const handleSignIn = async () => {
     try {
       const authUser = await signIn({ username: email.trim(), password });
@@ -58,7 +60,6 @@ const App = () => {
     }
   };
 
-  // Handles User Sign Out
   const handleSignOut = async () => {
     await signOut();
     setUser(null);
@@ -66,57 +67,73 @@ const App = () => {
 
   return (
     <Router>
-      <div style={{ textAlign: "center", marginTop: "20vh" }}>
+      <div className="container-fluid vh-100">
         {user ? (
-          // Home Page (After Login)
-          <div>
-            <h2>Welcome, {user.signInDetails?.loginId || "User"}!</h2>
-            <button onClick={handleSignOut}>Sign Out</button>
-          </div>
-        ) : isConfirming ? (
-          // Confirmation Page (After Sign Up)
-          <div>
-            <h2>Confirm Your Email</h2>
-            <input
-              type="text"
-              placeholder="Enter verification code"
-              value={confirmCode}
-              onChange={(e) => setConfirmCode(e.target.value)}
-            />
-            <br />
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <button onClick={handleConfirmSignUp}>Confirm</button>
-          </div>
+          <Dashboard user={user} handleSignOut={handleSignOut} />
         ) : (
-          // Sign In / Sign Up Page
-          <div>
-            <h2>{isSignUp ? "Sign Up" : "Sign In"}</h2>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <br />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <br />
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            {isSignUp ? (
-              <button onClick={handleSignUp}>Create Account</button>
-            ) : (
-              <button onClick={handleSignIn}>Sign In</button>
-            )}
-            <p>
-              {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
-              <button onClick={() => setIsSignUp(!isSignUp)}>
-                {isSignUp ? "Sign In" : "Sign Up"}
-              </button>
-            </p>
+          // Authentication Page
+          <div className="d-flex justify-content-center align-items-center vh-100">
+            <div className="card p-4 shadow-lg text-center" style={{ width: "400px" }}>
+              {isConfirming ? (
+                <>
+                  <h2>Confirm Your Email</h2>
+                  <input
+                    type="text"
+                    className="form-control my-2"
+                    placeholder="Enter verification code"
+                    value={confirmCode}
+                    onChange={(e) => setConfirmCode(e.target.value)}
+                  />
+                  {error && <p className="text-danger">{error}</p>}
+                  <button className="btn btn-success w-100 mt-3" onClick={handleConfirmSignUp}>
+                    Confirm
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2>{isSignUp ? "Sign Up" : "Sign In"}</h2>
+                  <input
+                    type="email"
+                    className="form-control my-2"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <input
+                    type="password"
+                    className="form-control my-2"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  {isSignUp && (
+                    <input
+                      type="password"
+                      className="form-control my-2"
+                      placeholder="Confirm Password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                  )}
+                  {error && <p className="text-danger">{error}</p>}
+                  {isSignUp ? (
+                    <button className="btn btn-success w-100 mt-3" onClick={handleSignUp}>
+                      Create Account
+                    </button>
+                  ) : (
+                    <button className="btn btn-success w-100 mt-3" onClick={handleSignIn}>
+                      Sign In
+                    </button>
+                  )}
+                  <p className="mt-3">
+                    {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
+                    <button className="btn btn-link" onClick={() => setIsSignUp(!isSignUp)}>
+                      {isSignUp ? "Sign In" : "Sign Up"}
+                    </button>
+                  </p>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
